@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
+import { wgslTurbopackRule } from "@vgpu/wgsl/next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {
@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
         loaders: ["@tailwindcss/turbopack"],
         as: "*.css",
       },
+      "*.wgsl": wgslTurbopackRule({ minify: true }),
     },
   },
 };
