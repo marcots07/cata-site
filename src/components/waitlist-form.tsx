@@ -3,11 +3,30 @@
 import Link from "next/link";
 import { useId, useState, type FormEvent } from "react";
 
+import type { Dictionary } from "@/i18n/dictionary";
+
 import { ArrowRight } from "./icons";
 
 type Status = "idle" | "sending" | "done" | "error";
+type FormError = keyof Dictionary["form"]["errors"];
 
-export function WaitlistForm({ id, align = "start" }: { id: string; align?: "start" | "center" }) {
+const ERRORS: readonly FormError[] = ["rate_limited", "invalid", "failed"];
+
+function isFormError(value: string): value is FormError {
+  return ERRORS.some((error) => error === value);
+}
+
+export function WaitlistForm({
+  id,
+  align = "start",
+  copy,
+  privacyHref,
+}: {
+  id: string;
+  align?: "start" | "center";
+  copy: Dictionary["form"];
+  privacyHref: string;
+}) {
   const fieldId = useId();
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<Status>("idle");
@@ -37,23 +56,23 @@ export function WaitlistForm({ id, align = "start" }: { id: string; align?: "sta
 
       if (!response.ok) {
         setStatus("error");
-        setMessage(error ?? "Couldn't save that just now. Try again.");
+        setMessage(error && isFormError(error) ? copy.errors[error] : copy.errors.failed);
         return;
       }
 
       setStatus("done");
-      setMessage("You're on the list. We'll write when Cata is ready to pour.");
+      setMessage(copy.success);
       setEmail("");
     } catch {
       setStatus("error");
-      setMessage("Couldn't save that just now. Try again.");
+      setMessage(copy.errors.failed);
     }
   }
 
   return (
     <form id={id} onSubmit={onSubmit} noValidate className="w-full max-w-[29rem]">
       <label htmlFor={fieldId} className="sr-only">
-        Email address
+        {copy.label}
       </label>
       <div
         className={`flex items-center gap-2 rounded-full border bg-parchment/[0.07] p-1.5 pl-5 shadow-[0_18px_50px_-20px_rgba(0,0,0,0.7)] backdrop-blur-xl transition-colors duration-300 focus-within:bg-parchment/[0.11] ${
@@ -69,7 +88,7 @@ export function WaitlistForm({ id, align = "start" }: { id: string; align?: "sta
           required
           autoComplete="email"
           inputMode="email"
-          placeholder="you@example.com"
+          placeholder={copy.placeholder}
           value={email}
           disabled={locked}
           onChange={(event) => setEmail(event.target.value)}
@@ -81,13 +100,13 @@ export function WaitlistForm({ id, align = "start" }: { id: string; align?: "sta
           className="group inline-flex h-11 shrink-0 items-center gap-2 rounded-full bg-parchment px-5 text-[14px] font-medium text-ink transition-[background-color,transform] duration-300 hover:bg-paper active:scale-[0.98] disabled:cursor-default disabled:opacity-80"
         >
           {status === "sending" ? (
-            "Joining…"
+            copy.sending
           ) : status === "done" ? (
-            "You're in"
+            copy.done
           ) : (
             <>
-              <span className="sm:hidden">Join</span>
-              <span className="hidden sm:inline">Join the waitlist</span>
+              <span className="sm:hidden">{copy.joinShort}</span>
+              <span className="hidden sm:inline">{copy.join}</span>
               <ArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-0.5" />
             </>
           )}
@@ -102,12 +121,12 @@ export function WaitlistForm({ id, align = "start" }: { id: string; align?: "sta
       >
         {message ?? (
           <>
-            One email when Cata is ready. No spam, ever.{" "}
+            {copy.promise}{" "}
             <Link
-              href="/privacy"
+              href={privacyHref}
               className="underline decoration-parchment/30 underline-offset-[3px] transition-colors hover:text-parchment hover:decoration-parchment/60"
             >
-              Privacy
+              {copy.privacy}
             </Link>
           </>
         )}

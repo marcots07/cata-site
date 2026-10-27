@@ -1,6 +1,10 @@
 import Image from "next/image";
 
+import type { Dictionary } from "@/i18n/dictionary";
+
 import {
+  ArrowRight,
+  ArrowUp,
   Chat,
   ChevronDown,
   Flash,
@@ -14,39 +18,43 @@ import {
   Sparkle,
   Utensils,
   WineBottle,
-  ArrowRight,
-  ArrowUp,
 } from "./icons";
 
-const TASTE = [
-  { label: "Body", value: 4 },
-  { label: "Acidity", value: 3 },
-  { label: "Tannin", value: 3 },
-  { label: "Sweetness", value: 1 },
-] as const;
+const TASTE = [4, 3, 3, 1] as const;
 
-const ESTIMATE_NOTE = "Estimated by Cata from the label. Not verified against a critic database.";
+type Ui = Dictionary["ui"];
 
-function TabBar({ tone }: { tone: "dark" | "light" }) {
+function withWine(template: string, wine: string) {
+  const [before, after = ""] = template.split("{wine}");
+  return (
+    <>
+      {before}
+      <b>{wine}</b>
+      {after}
+    </>
+  );
+}
+
+function TabBar({ tone, copy }: { tone: "dark" | "light"; copy: Ui["tabs"] }) {
   return (
     <div className={`ui-tabbar ${tone === "light" ? "is-light" : ""}`}>
       <div className="ui-tabrow">
         <div className="ui-tab">
           <Home size={22} />
-          <span className="ui-tab-label">Home</span>
+          <span className="ui-tab-label">{copy.home}</span>
         </div>
         <div className="ui-tab">
           <Chat size={22} />
-          <span className="ui-tab-label">Ask</span>
+          <span className="ui-tab-label">{copy.ask}</span>
         </div>
         <div className="ui-tab" />
         <div className="ui-tab">
           <Utensils size={22} />
-          <span className="ui-tab-label">Pair</span>
+          <span className="ui-tab-label">{copy.pair}</span>
         </div>
         <div className="ui-tab">
           <WineBottle size={22} />
-          <span className="ui-tab-label">Cellar</span>
+          <span className="ui-tab-label">{copy.cellar}</span>
         </div>
       </div>
       <div className="ui-scanbtn-wrap">
@@ -59,7 +67,7 @@ function TabBar({ tone }: { tone: "dark" | "light" }) {
 }
 
 /** The Scan tab: live camera with the bottle already found. */
-export function ScanCameraScreen() {
+export function ScanCameraScreen({ copy }: { copy: Ui }) {
   return (
     <div className="ui-tab-screen">
       <div className="ui-cam">
@@ -75,7 +83,7 @@ export function ScanCameraScreen() {
               <div className="ui-vf-status">
                 <div className="ui-pill">
                   <span className="ui-dot" />
-                  <span>Bottle found</span>
+                  <span>{copy.camera.found}</span>
                 </div>
               </div>
               <i className="ui-corner ui-corner-tl" />
@@ -86,15 +94,15 @@ export function ScanCameraScreen() {
             <div className="ui-ov-side" />
           </div>
           <div className="ui-ov-bottom">
-            <div className="ui-instruction">Point at a wine label</div>
+            <div className="ui-instruction">{copy.camera.instruction}</div>
             <div className="ui-modes">
               <div className="ui-mode is-on">
                 <ScanFrame size={15} />
-                One bottle
+                {copy.camera.one}
               </div>
               <div className="ui-mode">
                 <Grid size={15} />
-                Many bottles
+                {copy.camera.many}
               </div>
             </div>
             <div className="ui-shutter-row">
@@ -111,13 +119,13 @@ export function ScanCameraScreen() {
           </div>
         </div>
       </div>
-      <TabBar tone="dark" />
+      <TabBar tone="dark" copy={copy.tabs} />
     </div>
   );
 }
 
 /** scan-result, presented as a page sheet over the camera. */
-export function ScanResultScreen() {
+export function ScanResultScreen({ copy }: { copy: Ui }) {
   return (
     <div className="ui-sheet-screen">
       <div className="ui-sheet-behind" />
@@ -126,7 +134,7 @@ export function ScanResultScreen() {
           <span className="ui-page-side">
             <ChevronDown size={26} strokeWidth={2} />
           </span>
-          <div className="ui-page-title">Wine identified</div>
+          <div className="ui-page-title">{copy.result.title}</div>
           <span className="ui-page-side" />
         </div>
         <div className="ui-page-content">
@@ -136,42 +144,41 @@ export function ScanResultScreen() {
           <div className="ui-stack-4">
             <div className="ui-title-22">Hermelinda</div>
             <div className="ui-sub">CR Vinos</div>
-            <div className="ui-sub">Valle de Guadalupe, Baja California, Mexico</div>
+            <div className="ui-sub">{copy.result.region}</div>
           </div>
           <div className="ui-link-row">
             <Pencil size={14} />
-            Not right? Fix the details
+            {copy.result.fix}
           </div>
           <div className="ui-card">
-            <div className="ui-card-title">Taste profile</div>
+            <div className="ui-card-title">{copy.result.taste}</div>
             <div className="ui-bars">
-              {TASTE.map((row) => (
-                <div key={row.label} className="ui-bar">
-                  <span className="ui-bar-label">{row.label}</span>
+              {TASTE.map((value, index) => (
+                <div key={copy.result.tasteLabels[index]} className="ui-bar">
+                  <span className="ui-bar-label">{copy.result.tasteLabels[index]}</span>
                   <div className="ui-segs">
                     {[0, 1, 2, 3, 4].map((i) => (
-                      <i key={i} className={`ui-seg ${i < row.value ? "is-on" : ""}`} />
+                      <i key={i} className={`ui-seg ${i < value ? "is-on" : ""}`} />
                     ))}
                   </div>
                 </div>
               ))}
             </div>
-            <div className="ui-foot">{ESTIMATE_NOTE}</div>
+            <div className="ui-foot">{copy.result.estimate}</div>
           </div>
           <div className="ui-card">
-            <div className="ui-card-title">Tasting notes</div>
-            <div className="ui-body">
-              Blackberry and black currant up front, then violet, black pepper and a touch of vanilla
-              from 12 months in American oak.
-            </div>
-            <div className="ui-foot">{ESTIMATE_NOTE}</div>
+            <div className="ui-card-title">{copy.result.notesTitle}</div>
+            <div className="ui-body">{copy.result.notes}</div>
+            <div className="ui-foot">{copy.result.estimate}</div>
           </div>
           <div className="ui-card">
-            <div className="ui-card-title">Pairs well with</div>
+            <div className="ui-card-title">{copy.result.pairs}</div>
             <div className="ui-chips">
-              <span className="ui-chip">Grilled steak</span>
-              <span className="ui-chip">Tacos al pastor</span>
-              <span className="ui-chip">BBQ ribs</span>
+              {copy.result.chips.map((chip) => (
+                <span key={chip} className="ui-chip">
+                  {chip}
+                </span>
+              ))}
             </div>
           </div>
         </div>
@@ -204,28 +211,26 @@ function WineRow({
 }
 
 /** pair/result: the dish Cata saw and the bottle it picked from the cellar. */
-export function PairPreview() {
+export function PairPreview({ copy }: { copy: Ui }) {
   return (
     <div className="app-ui ui-surface ui-pair">
       <div className="ui-stack-4">
-        <div className="ui-title-22">Steak frites</div>
-        <div className="ui-sub">Grilled · Rich, savory, buttery</div>
+        <div className="ui-title-22">{copy.pair.dish}</div>
+        <div className="ui-sub">{copy.pair.vibe}</div>
       </div>
       <div className="ui-stack-8">
-        <div className="ui-section-title">Open from your cellar</div>
+        <div className="ui-section-title">{copy.pair.open}</div>
         <WineRow image="/app/thumb-hermelinda.jpg" name="Hermelinda" sub="CR Vinos · Valle de Guadalupe" />
-        <div className="ui-reason">
-          Its blackberry and black pepper match the char on the steak, and the tannin cuts through the
-          herb butter and the fries.
-        </div>
+        <div className="ui-reason">{copy.pair.reason}</div>
       </div>
       <div className="ui-stack-8">
-        <div className="ui-section-title">What Cata saw</div>
+        <div className="ui-section-title">{copy.pair.saw}</div>
         <div className="ui-chips">
-          <span className="ui-chip is-neutral">Grilled steak</span>
-          <span className="ui-chip is-neutral">Herb butter</span>
-          <span className="ui-chip is-neutral">Fries</span>
-          <span className="ui-chip is-neutral">Chives</span>
+          {copy.pair.chips.map((chip) => (
+            <span key={chip} className="ui-chip is-neutral">
+              {chip}
+            </span>
+          ))}
         </div>
       </div>
     </div>
@@ -233,13 +238,13 @@ export function PairPreview() {
 }
 
 /** The Ask tab: the one input in ask mode, and the inline answer it produced. */
-export function AskPreview() {
+export function AskPreview({ copy }: { copy: Ui }) {
   return (
     <div className="app-ui ui-ask-wrap">
       <div className="ui-ask-input">
         <Sparkle size={18} strokeWidth={2} className="ui-ask-input-icon" />
         <span className="ui-ask-input-text">
-          What should I open tonight?
+          {copy.ask.question}
           <i className="ui-caret" />
         </span>
         <span className="ui-ask-send">
@@ -253,18 +258,18 @@ export function AskPreview() {
             Cata
           </span>
         </div>
-        <div className="ui-ask-question">What should I open tonight?</div>
-        <div className="ui-ask-answer">
-          Open the <b>Hermelinda</b> tonight. It’s drinking well now, and its blackberry and black
-          pepper are made for a seared steak.
-        </div>
+        <div className="ui-ask-question">{copy.ask.question}</div>
+        <div className="ui-ask-answer">{withWine(copy.ask.answer, "Hermelinda")}</div>
         <WineRow image="/app/thumb-hermelinda.jpg" name="Hermelinda" sub="CR Vinos · Valle de Guadalupe" />
         <div className="ui-chips">
-          <span className="ui-follow">What else pairs with it?</span>
-          <span className="ui-follow">When should I open the Malbec?</span>
+          {copy.ask.follows.map((follow) => (
+            <span key={follow} className="ui-follow">
+              {follow}
+            </span>
+          ))}
         </div>
         <div className="ui-ask-continue">
-          Continue in chat
+          {copy.ask.continue}
           <ArrowRight size={14} />
         </div>
       </div>
@@ -273,22 +278,22 @@ export function AskPreview() {
 }
 
 /** My Cellar, All Wines. */
-export function CellarPreview() {
+export function CellarPreview({ copy }: { copy: Ui }) {
   return (
     <div className="app-ui ui-surface ui-cellar">
       <div className="ui-seg-track">
-        <div className="ui-seg-item is-on">All Wines</div>
-        <div className="ui-seg-item">Folders</div>
+        <div className="ui-seg-item is-on">{copy.cellar.all}</div>
+        <div className="ui-seg-item">{copy.cellar.folders}</div>
       </div>
       <div className="ui-search">
         <Search size={18} />
-        <span>Search your cellar</span>
+        <span>{copy.cellar.search}</span>
       </div>
       <div className="ui-results-bar">
-        <span>3 wines</span>
+        <span>{copy.cellar.count}</span>
         <span className="ui-sort">
           <Sort size={15} />
-          Recently added
+          {copy.cellar.sort}
         </span>
       </div>
       <div className="ui-stack-12">

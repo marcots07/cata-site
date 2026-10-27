@@ -1,4 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
+import type { Metadata } from "next";
 import Image from "next/image";
 
 import {
@@ -15,6 +16,10 @@ import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { WaitlistForm } from "@/components/waitlist-form";
 import { WineStage } from "@/components/wine-stage";
+import type { Dictionary } from "@/i18n/dictionary";
+import { getDictionary } from "@/i18n/get-dictionary";
+import type { Locale } from "@/i18n/locales";
+import { pageMeta } from "@/i18n/metadata";
 
 const delay = (seconds: number) => ({ "--d": `${seconds}s` }) as CSSProperties;
 
@@ -29,42 +34,43 @@ const VARIETALS = [
   "Baja California",
 ];
 
-const SCAN_POINTS = [
-  {
-    icon: <ScanFrame size={20} />,
-    title: "It finds the bottle for you",
-    body: "Live detection frames the label before you tap the shutter.",
-  },
-  {
-    icon: <Grid size={20} />,
-    title: "One bottle or the whole shelf",
-    body: "Many bottles mode boxes every bottle in the frame at once.",
-  },
-  {
-    icon: <Sparkle size={20} />,
-    title: "Honest about what it knows",
-    body: "Taste profiles and notes are marked whenever Cata estimates them.",
-  },
-] as const;
+const SCAN_ICONS = [
+  <ScanFrame key="frame" size={20} />,
+  <Grid key="grid" size={20} />,
+  <Sparkle key="sparkle" size={20} />,
+];
 
-export default function Home() {
+export async function generateMetadata(): Promise<Metadata> {
+  const { locale, dict } = await getDictionary();
+  const meta = pageMeta(locale, "", dict.meta.title, dict.meta.description, dict.meta.ogAlt);
+  return {
+    ...meta,
+    openGraph: {
+      ...meta.openGraph,
+      description: dict.meta.ogDescription,
+    },
+  };
+}
+
+export default async function Home() {
+  const { locale, dict } = await getDictionary();
   return (
     <>
-      <SiteHeader />
+      <SiteHeader lang={locale} copy={dict.header} />
       <main>
-        <Hero />
+        <Hero locale={locale} dict={dict} />
         <Varietals />
-        <ScanSection />
-        <FeatureGrid />
-        <Closing />
+        <ScanSection locale={locale} dict={dict} />
+        <FeatureGrid locale={locale} dict={dict} />
+        <Closing locale={locale} dict={dict} />
       </main>
-      <SiteFooter />
+      <SiteFooter lang={locale} copy={dict.footer} />
       <RevealController />
     </>
   );
 }
 
-function Hero() {
+function Hero({ locale, dict }: { locale: Locale; dict: Dictionary }) {
   return (
     <section id="top" className="relative isolate min-h-[max(100svh,640px)] overflow-hidden">
       <WineStage className="absolute inset-0 -z-20" />
@@ -80,40 +86,37 @@ function Hero() {
               <span className="absolute inset-0 animate-ping rounded-full bg-burgundy-bright/70" />
               <span className="relative size-2 rounded-full bg-burgundy-bright" />
             </span>
-            Coming soon to iPhone
+            {dict.hero.soon}
           </p>
           <h1 className="mt-7 font-display text-[clamp(4rem,10.5vw,9.5rem)] leading-[0.86] tracking-[-0.03em]">
             <span className="rise block" style={delay(0.25)}>
-              Your cellar,
+              {dict.hero.line1}
             </span>
             <span className="rise block pb-2 pr-3 italic" style={delay(0.38)}>
-              <span className="text-sheen">explained.</span>
+              <span className="text-sheen">{dict.hero.line2}</span>
             </span>
           </h1>
           <p
             className="rise mt-6 max-w-[31rem] text-[17px] leading-relaxed text-parchment/70 sm:text-xl sm:leading-relaxed"
             style={delay(0.52)}
           >
-            Point your camera at a label, a dish, or a question. Cata tells you what to open —
-            including a bottle you already own.
+            {dict.hero.body}
           </p>
           <div className="rise mt-9" style={delay(0.66)}>
-            <WaitlistForm id="waitlist" />
+            <WaitlistForm id="waitlist" copy={dict.form} privacyHref={`/${locale}/privacy`} />
           </div>
         </div>
       </div>
 
       <div className="pointer-events-none absolute inset-x-0 bottom-8 mx-auto hidden max-w-[1360px] items-end justify-between px-10 lg:flex">
         <a
-          href="#scan"
+          href={`/${locale}#scan`}
           className="pointer-events-auto flex items-center gap-3 text-[11px] uppercase tracking-[0.24em] text-parchment/50 transition-colors hover:text-parchment"
         >
           <span className="scroll-cue relative h-10 w-px overflow-hidden bg-parchment/20" />
-          Scroll
+          {dict.hero.scroll}
         </a>
-        <p className="text-[11px] uppercase tracking-[0.24em] text-parchment/40">
-          Move your cursor to shift the light
-        </p>
+        <p className="text-[11px] uppercase tracking-[0.24em] text-parchment/40">{dict.hero.light}</p>
       </div>
     </section>
   );
@@ -139,31 +142,35 @@ function Varietals() {
   );
 }
 
-function ScanSection() {
+function ScanSection({ locale, dict }: { locale: Locale; dict: Dictionary }) {
   return (
     <section id="scan" className="grain paper-grain relative overflow-hidden bg-parchment text-ink">
       <div className="mx-auto grid max-w-[1360px] items-center gap-20 px-6 py-28 sm:px-10 md:py-40 lg:grid-cols-[1fr_1.1fr] lg:gap-12">
         <div className="relative z-10">
           <p className="eyebrow text-burgundy" data-reveal>
-            01 — Scan
+            {dict.scan.index}
           </p>
           <h2
-            className="mt-6 font-display text-[clamp(3.2rem,6.4vw,6rem)] leading-[0.92] tracking-[-0.025em]"
+            className={`mt-6 font-display leading-[0.92] tracking-[-0.025em] ${
+              locale === "es"
+                ? "text-[clamp(2.7rem,5.2vw,4.8rem)]"
+                : "text-[clamp(3.2rem,6.4vw,6rem)]"
+            }`}
             data-reveal
             style={delay(0.05)}
           >
-            Scan any bottle.
+            {dict.scan.title}
             <br />
-            <span className="italic text-sheen-ink">Know it instantly.</span>
+            <span className="italic text-sheen-ink">{dict.scan.accent}</span>
           </h2>
           <p className="mt-7 max-w-[30rem] text-lg leading-relaxed text-olive" data-reveal style={delay(0.1)}>
-            Point your camera at a label to see what it is, how it tastes and what to pair it with.
+            {dict.scan.body}
           </p>
           <ul className="mt-12 max-w-[34rem] divide-y divide-olive/15 border-y border-olive/15" data-reveal style={delay(0.15)}>
-            {SCAN_POINTS.map((point) => (
+            {dict.scan.points.map((point, index) => (
               <li key={point.title} className="flex gap-5 py-5">
                 <span className="mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-full bg-burgundy/10 text-burgundy">
-                  {point.icon}
+                  {SCAN_ICONS[index]}
                 </span>
                 <span>
                   <span className="block text-[17px] font-medium text-ink">{point.title}</span>
@@ -179,14 +186,14 @@ function ScanSection() {
           <div className="absolute left-0 top-12 sm:top-16">
             <div className="drift [--r:-7deg]" style={delay(0.6)}>
               <Phone className="[--s:0.48] sm:[--s:0.64]">
-                <ScanCameraScreen />
+                <ScanCameraScreen copy={dict.ui} />
               </Phone>
             </div>
           </div>
           <div className="absolute right-0 top-0">
             <div className="drift [--r:4deg]">
               <Phone className="[--s:0.5] sm:[--s:0.66]">
-                <ScanResultScreen />
+                <ScanResultScreen copy={dict.ui} />
               </Phone>
             </div>
           </div>
@@ -238,35 +245,41 @@ function FeatureCard({
   );
 }
 
-function FeatureGrid() {
+function FeatureGrid({ locale, dict }: { locale: Locale; dict: Dictionary }) {
   return (
     <section className="grain paper-grain relative bg-parchment pb-28 text-ink md:pb-40">
       <div className="mx-auto max-w-[1360px] px-6 sm:px-10">
         <div className="flex flex-col justify-between gap-6 border-t border-olive/15 pt-16 md:flex-row md:items-end md:pt-24">
-          <h2 className="font-display text-[clamp(2.8rem,5.6vw,5rem)] leading-[0.94] tracking-[-0.025em]" data-reveal>
-            Pair it. Ask it.
+          <h2
+            className={`font-display leading-[0.94] tracking-[-0.025em] ${
+              locale === "es"
+                ? "text-[clamp(2.5rem,4.8vw,4.4rem)]"
+                : "text-[clamp(2.8rem,5.6vw,5rem)]"
+            }`}
+            data-reveal
+          >
+            {dict.features.title}
             <br />
-            <span className="italic text-sheen-ink">Keep it.</span>
+            <span className="italic text-sheen-ink">{dict.features.accent}</span>
           </h2>
           <p className="max-w-[24rem] text-lg leading-relaxed text-olive md:pb-2" data-reveal style={delay(0.08)}>
-            Scanning is the start. Cata remembers every bottle you keep, so its answers come from your
-            own cellar.
+            {dict.features.body}
           </p>
         </div>
 
         <div className="mt-14 grid gap-5 lg:grid-cols-12">
           <FeatureCard
             id="pair"
-            index="02 — Pair"
-            title="The right wine for your meal."
-            body="Snap the dish and Cata picks a bottle from your own cellar."
+            index={dict.features.pair.index}
+            title={dict.features.pair.title}
+            body={dict.features.pair.body}
             className="lg:col-span-7"
           >
             <div className="relative px-5 pb-6 sm:h-[440px] sm:p-0">
               <div className="relative h-[220px] overflow-hidden rounded-[22px] sm:absolute sm:inset-y-0 sm:left-10 sm:h-auto sm:w-[58%] sm:rounded-b-none">
                 <Image
                   src="/app/steak-frites.jpg"
-                  alt="Steak frites on a white plate"
+                  alt={dict.features.pair.imageAlt}
                   fill
                   sizes="(min-width: 1024px) 420px, 90vw"
                   className="object-cover transition-transform duration-[1.6s] ease-out group-hover:scale-[1.04]"
@@ -274,23 +287,23 @@ function FeatureGrid() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
               </div>
               <div className="relative -mt-14 sm:absolute sm:bottom-8 sm:right-8 sm:mt-0 sm:w-[400px]">
-                <PairPreview />
+                <PairPreview copy={dict.ui} />
               </div>
             </div>
           </FeatureCard>
 
           <FeatureCard
             id="ask"
-            index="03 — Ask"
-            title="Ask Cata anything."
-            body="What to open tonight, what to buy, what goes with what."
+            index={dict.features.ask.index}
+            title={dict.features.ask.title}
+            body={dict.features.ask.body}
             tone="dark"
             className="lg:col-span-5"
             style={delay(0.08)}
             backdrop={<div aria-hidden="true" className="ask-glow absolute inset-0 -z-10" />}
           >
             <div className="px-5 pb-6 sm:px-10 sm:pb-10">
-              <AskPreview />
+              <AskPreview copy={dict.ui} />
             </div>
           </FeatureCard>
 
@@ -300,12 +313,12 @@ function FeatureGrid() {
             className="relative isolate grid overflow-hidden rounded-[32px] border border-olive/10 bg-parchment-deep text-ink lg:col-span-12 lg:min-h-[480px] lg:grid-cols-[1fr_1.05fr]"
           >
             <div className="relative flex flex-col p-8 sm:p-10 lg:p-14">
-              <p className="eyebrow text-burgundy">04 — Cellar</p>
+              <p className="eyebrow text-burgundy">{dict.features.cellar.index}</p>
               <h3 className="mt-4 font-display text-[clamp(2.2rem,3.4vw,3.1rem)] leading-[0.98] tracking-[-0.02em]">
-                Keep it in your cellar.
+                {dict.features.cellar.title}
               </h3>
               <p className="mt-3 max-w-[26rem] text-[16px] leading-relaxed text-olive lg:mb-10">
-                Every bottle you add is saved, searchable and sorted into folders.
+                {dict.features.cellar.body}
               </p>
               <div aria-hidden="true" className="relative mt-auto hidden h-[320px] lg:block">
                 <div className="absolute -bottom-36 -left-24 h-[420px] w-[560px] rounded-[50%] bg-[radial-gradient(closest-side,rgba(192,135,47,0.28),rgba(153,51,53,0.14)_55%,transparent)]" />
@@ -336,7 +349,7 @@ function FeatureGrid() {
             </div>
             <div className="relative h-[400px] overflow-hidden lg:flex lg:h-auto lg:items-center lg:overflow-visible lg:py-14 lg:pl-6 lg:pr-14">
               <div className="absolute inset-x-5 top-0 mx-auto max-w-[420px] sm:inset-x-10 lg:static lg:ml-auto lg:mr-0 lg:w-full lg:max-w-[460px]">
-                <CellarPreview />
+                <CellarPreview copy={dict.ui} />
               </div>
             </div>
           </article>
@@ -346,32 +359,30 @@ function FeatureGrid() {
   );
 }
 
-function Closing() {
+function Closing({ locale, dict }: { locale: Locale; dict: Dictionary }) {
   return (
     <section id="join" className="grain relative isolate overflow-hidden bg-ink py-32 md:py-48">
       <div aria-hidden="true" className="closing-glow absolute inset-0 -z-10" />
       <div className="mx-auto flex max-w-[1100px] flex-col items-center px-6 text-center">
         <p className="eyebrow text-parchment/50" data-reveal>
-          The waitlist is open
+          {dict.closing.eyebrow}
         </p>
         <h2
           className="mt-7 font-display text-[clamp(3.4rem,8.6vw,8rem)] leading-[0.9] tracking-[-0.03em]"
           data-reveal
           style={delay(0.06)}
         >
-          What should I
+          {dict.closing.line1}
           <br />
-          <span className="italic text-sheen">open tonight?</span>
+          <span className="italic text-sheen">{dict.closing.line2}</span>
         </h2>
         <p className="mt-8 max-w-[33rem] text-lg leading-relaxed text-parchment/65" data-reveal style={delay(0.12)}>
-          Cata is coming to iPhone. Leave your email and we&apos;ll tell you the moment you can ask it
-          yourself.
+          {dict.closing.body}
         </p>
         <div className="mt-11 flex w-full justify-center" data-reveal style={delay(0.18)}>
-          <WaitlistForm id="waitlist-closing" align="center" />
+          <WaitlistForm id="waitlist-closing" align="center" copy={dict.form} privacyHref={`/${locale}/privacy`} />
         </div>
       </div>
     </section>
   );
 }
-
